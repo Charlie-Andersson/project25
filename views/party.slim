@@ -1,0 +1,25 @@
+h1 party wohoo! 
+- if session[:user_id] == nil
+    p You are not logged in
+    a href="/" Please log in here 
+- elsif session[:user_id] != nil
+    - if @party[session[:user_id]-1] == nil
+        p You have no party yet
+        form action="create" method="POST"
+            input type="text" name="party_name" placeholder="Enter party name"
+            button type="submit" Create a party
+    - else
+        p You have a party!
+        a href="/pokemon" Add more pokemons to your party
+
+- @party.each do |party|
+        - if party["partyId"] == session[:user_id]
+            h2 Party: #{@party[session[:user_id]-1]["partyName"]}
+            - @partyPokemon.each do |partyPokemon|
+                -@data2.each do |pokemon|
+                    - if party["partyId"] == partyPokemon["partyId"]
+                        - if partyPokemon["pokemonId"] == pokemon["pokemonId"]
+                            p  #{pokemon["pokemonName"]}
+                            form action="remove" method="POST"
+                                input type="hidden" name="pokemon_id" value="#{pokemon["pokemonId"]}"
+                                button type="submit" Remove from party
