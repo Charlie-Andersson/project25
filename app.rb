@@ -9,6 +9,13 @@ get('/') do
 slim(:start)
 end
 
+before('/protected/*') do
+    if session[:user_id] ==  nil
+        redirect('/')
+    end
+end
+ 
+
 post('/login') do
     username = params[:username]
     password = params[:password]
@@ -20,7 +27,7 @@ p result['userId']
     if result && password == result["password"] 
         session[:user_id] = result['userId'] 
         p "session puts här #{session[:user_id]}"
-        redirect('/party')
+        redirect('/protected/party')
     else
         redirect('/')
     end
@@ -29,7 +36,7 @@ end
 
     
 
-get('/party') do
+get('/protected/party') do
     db = SQLite3::Database.new("db/pokemon.db")
     db.results_as_hash = true 
     @party = db.execute("SELECT * FROM party")
@@ -49,55 +56,62 @@ get('/pokemon') do
 slim(:pokemon)
 end
 
-post('/users/new') do
+post('/users') do
     username = params[:username]
     password = params[:password]
     password_confirm = params[:password_confirm]
   
-    if (password == password_confirm)
-      db = SQLite3::Database.new('db/pokemon.db')
-      db.execute("INSERT INTO user (username, password) VALUES (?,?)", [username, password])
-      redirect('/')
+    if username.nil? || username.strip.length < 3
+      halt 400, "användarnamn måste vara minst 3 bokstäver långt"
+    elsif password.nil? || password.strip.length < 3
+      halt 400, "lösen måste vara minst 3 bokstäver långt"
+    elsif password != password_confirm
+      halt 400, "lösen matchar inte"
     else
-
+      db = SQLite3::Database.new('db/pokemon.db')
+      db.execute("INSERT INTO user (username, password) VALUES (?, ?)", [username, password])
+      redirect('/')
     end
 end
 
-post('/add') do
+post('/party/:id/add') do
+    id = session[:user_id]
     pokemon_id = params[:pokemon_id] 
     user_id = session[:user_id] 
   
     if user_id.nil?
       redirect('/') 
-    else
+    elsif user_id == session[:user_id]
       db = SQLite3::Database.new("db/pokemon.db")
       db.execute("INSERT INTO party_pokemon (partyId, pokemonId) VALUES (?, ?)", [user_id, pokemon_id])
-      redirect('/party') 
+      redirect('/protected/party') 
     end
 end
 
-post('/remove') do
+post('/protected/party/:id/remove') do
+    id = session[:user_id]
     pokemon_id = params[:pokemon_id]
     user_id = session[:user_id] 
   
     if user_id.nil?
       redirect('/') 
-    else
+    elsif user_id == session[:user_id]
       db = SQLite3::Database.new("db/pokemon.db")
       db.execute("DELETE FROM party_pokemon WHERE partyId = ? AND pokemonId = ?", [user_id, pokemon_id])
-      redirect('/party') 
+      redirect('/protected/party') 
     end
 end
 
-post('/create') do
+post('/protected/party/:id/create') do
+    id = session[:user_id]
     party_name = params[:party_name]
     user_id = session[:user_id] 
     if user_id.nil?
       redirect('/') 
-    else
+    elsif user_id == session[:user_id]
       db = SQLite3::Database.new("db/pokemon.db")
       db.execute("INSERT INTO party (partyName, partyId) VALUES (?, ?)", [party_name, user_id])
-      redirect('/party') 
+      redirect('/protected/party') 
     end
 end
 

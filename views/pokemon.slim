@@ -5,7 +5,7 @@ h1 Pokemon
 - else
     - @data.each do |pokemon|        
         p Namn #{pokemon["pokemonName"]}
-        form action="add" method="POST"
+        form action="/party/#{session[:user_id]}/add" method="POST"
             input type="hidden" name="pokemon_id" value="#{pokemon["pokemonId"]}"
             button type="submit" Add to party
 
